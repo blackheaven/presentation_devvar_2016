@@ -124,3 +124,6 @@ main = putStr $ unlines (zipWith (\t r -> "Time " ++ show t ++ ":\n" ++ r ++ "\n
                                  (iterate (timeInterval+) 0)
                                  (program trackingData))
   -- where sim = foldr (\rep -> appendChan stdout rep exit . appendFile "trackFile" rep exit) done
+
+visualize :: Region -> String
+visualize r = unlines [[if r (Pt x y) then '.' else ' ' | x <- [1,2..20]] | y <- [1,2..20]]

@@ -149,6 +149,37 @@ pie r l u = segment l u /\ circle r
 ```
                         </script>
                     </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+visualize :: Region -> String
+visualize r = unlines [
+                        [if r (Pt x y) then '.' else ' ' | x <- [1,2..20]]
+                        | y <- [1,2..20]]
+
+visualize (circle 10 `at` Pt 10 10) # visualize ((circle 10 `at` Pt 10 10) /\ (circle 5 `at` Pt 2 3))
+     .........                      #       .
+    ...........                     #      ..
+  ...............                   #    ....
+  ...............                   #    ....
+ .................                  #   .....
+...................                 # .....  
+...................                 # ....   
+...................                 # 
+...................                 # 
+...................                 # 
+...................                 # 
+...................                 # 
+...................                 # 
+...................                 # 
+ .................                  # 
+  ...............                   # 
+  ...............                   # 
+    ...........                     # 
+     .........                      #
+```
+                        </script>
+                    </section>
                 </section>
                 <section>
                     <section data-markdown>
@@ -159,9 +190,32 @@ pie r l u = segment l u /\ circle r
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            Code
+```
+```
                         </script>
                     </section>
+                </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+```
+                        </script>
+                    </section>
+                </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+```
+                        </script>
+                    </section>
+                </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+```
+                        </script>
+                    </section>
+                </section>
                     <section data-markdown>
                         <script type="text/template">
                             La logique métier n'a pas bougée !!!
