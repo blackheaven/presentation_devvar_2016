@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
 
-        <title>Introduction à Haskell - JDLL 2014</title>
+        <title>Éléments de programmation fonctionnelle - /dev/var/lambda, Toulon, 21/04/16</title>
 
         <meta name="description" content="Éléments de programmation fonctionnelle">
         <meta name="author" content="Gautier DI FOLCO">
@@ -40,15 +40,15 @@
                         <script type="text/template">
                             ## Éléments de programmation fonctionnelle
 
-                            /dev/var/lambda, Lyon, 21/04/16 / [@gautier_difolco](https://twitter.com/gautier_difolco)
+                            /dev/var/lambda, Toulon, 21/04/16 / [@gautier_difolco](https://twitter.com/gautier_difolco)
 
                             [https://github.com/blackheaven/presentation_devvar_2016](https://github.com/blackheaven/presentation_devvar_2016)
                         </script>
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            ![Basé sur le lambda calculus](lamdba.jpg)
-                            ![Inventé par alonso Church en 19..](alonso-church.jpg)
+                            ![Basé sur le lambda calculus](lambda.png)
+                            ![Inventé par alonso Church en 1936](alonzo-church.jpg)
                         </script>
                     </section>
                     <section data-markdown>
@@ -64,19 +64,89 @@
                 <section>
                     <section data-markdown>
                         <script type="text/template">
-                            ## AWS
+                            ## AWS (AEGIS Weapons System)
 
-                            Papers + history
+                             * http://haskell.cs.yale.edu/wp-content/uploads/2011/03/HaskellVsAda-NSWC.pdf
+                             * http://www.cs.yale.edu/publications/techreports/tr1031.pdf
                         </script>
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            Languages LoC
+                            ![Resultat par langage](loc.png)
                         </script>
                     </section>
                     <section data-markdown>
                         <script type="text/template">
-                            Code
+```
+data Vector a = Pt a a deriving (Eq, Show)
+type Point = Vector Float
+
+origin :: Point
+origin = Pt 0 0
+
+sqrDist :: Num a => Vector a -> a
+sqrDist (Pt x y) = x*x + y*y
+```
+```
+type Region = Point -> Bool
+inRegion :: Point -> Region -> Bool
+p `inRegion` r = r p
+```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+type Radius = Float
+
+circle :: Radius -> Region
+circle r = \p -> sqrDist p < r*r
+
+halfPlane :: Point -> Point -> Region
+halfPlane a b = \p -> zcross (a - p) (b - a) > 0
+  where zcross (Pt x y) (Pt u v) = x*v - y*u
+
+```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+outside :: Region -> Region
+outside r = \p -> not (r p)
+
+(/\), (\/) :: Region -> Region -> Region
+r1 /\ r2 = \p -> (r1 p && r2 p)
+r1 \/ r2 = \p -> (r1 p || r2 p)
+
+intersect, union :: [Region] -> Region
+intersect = foldr1 (/\)
+union = foldr1 (\/)
+
+at :: Region -> Point -> Region
+r `at` p0 = \p -> r (p - p0)
+```
+                        </script>
+                    </section>
+                    <section data-markdown>
+                        <script type="text/template">
+```
+annulus :: Radius -> Radius -> Region
+annulus r1 r2 = outside (circle r1) /\ circle r2
+
+convexPoly :: [Point] -> Region
+convexPoly (v:vs) = intersect (zipWith halfPlane ([v]++vs) (vs++[v]))
+
+type Angle = Float
+
+segment :: Angle -> Angle -> Region
+segment l u = halfPlane (radial u) origin /\ halfPlane (radial l) origin
+  where radial a = Pt (cos theta) (sin theta)
+                   where theta = a * (pi / 180)
+
+pie :: Radius -> Angle -> Angle -> Region
+pie r l u = segment l u /\ circle r
+```
                         </script>
                     </section>
                 </section>
