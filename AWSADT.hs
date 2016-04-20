@@ -1,3 +1,5 @@
+import Data.List(foldl')
+import Data.Bits(xor)
 -- http://haskell.cs.yale.edu/wp-content/uploads/2011/03/HaskellVsAda-NSWC.pdf
 -- http://www.cs.yale.edu/publications/techreports/tr1031.pdf
 -- 7.1.1 Points
@@ -23,6 +25,8 @@ data Region = Circle Radius
             | Intersects [Region]
             | Unions [Region]
             | At Region Point
+            deriving (Show)
+
 inRegion :: Point -> Region -> Bool
 inRegion p r = case r of
                  Circle r      -> sqrDist p < r*r
@@ -133,8 +137,67 @@ timeInterval = 20
 --                         (program trackingData))
 --   where display = foldr (\rep -> appendChan stdout rep exit . appendFile "trackFile" rep exit) done
 
+-- main :: IO ()
+-- main = putStr $ unlines (zipWith (\t r -> "Time " ++ show t ++ ":\n" ++ r ++ "\n")
+--                                  (iterate (timeInterval+) 0)
+--                                  (program trackingData))
+
 main :: IO ()
-main = putStr $ unlines (zipWith (\t r -> "Time " ++ show t ++ ":\n" ++ r ++ "\n")
-                                 (iterate (timeInterval+) 0)
-                                 (program trackingData))
-  -- where sim = foldr (\rep -> appendChan stdout rep exit . appendFile "trackFile" rep exit) done
+main = writeFile "/tmp/out.svg" $ "<svg height=\"" ++ show imgSize ++ "\" width=\"" ++ show imgSize ++ "\">" ++ (concatMap visualize (map snd (slaves ++ tightZones))) ++ "</svg>"
+
+imgSize :: Float
+imgSize = 300
+
+visualize :: Region -> String
+visualize r = cs ++ "\n<rect x=\"0\" y=\"0\" width=\"" ++ show imgSize ++ "\" height=\"" ++ show imgSize ++ "\" fill=\"red\" clip-path=\"url(#" ++ ci ++ ")\" />"
+  where (ci, _, cs) = toClip r
+
+toClip :: Region -> (String, String, String)
+toClip r = case r of
+             Circle r'      -> clipize "" "" ("<circle cx=\"0\" cy=\"0\" r=\"" ++ show r' ++ "\" />")
+             HalfPlane a b  -> let (angle, x, y) = computeHp a b in ((xa, ya), (xb, yb)) = (a, b) in ("", "", "") -- let zcross (Pt x y) (Pt u v) = x*v - y*u in zcross (a - p) (b - a) > 0
+             Outside r'     -> ("", "", "") -- not (inRegion p r')
+             Intersect a b  -> let (cha, _, ca) = toClip a in let (_, ihb, cb) = toClip b in clipize (ca ++ cb) (" clip-path=\"url(#" ++ cha ++ ")\"") (use ihb)
+             Union a b      -> let (_, iha, ca) = toClip a in let (_, ihb, cb) = toClip b in clipize (ca ++ cb) "" (use iha ++ use ihb)
+             Intersects xs  -> foldr1 (\(cha, _, ca) (_, ihb, cb) -> clipize (ca ++ cb) (" clip-path=\"url(#" ++ cha ++ ")\"") (use ihb)) $ map toClip xs
+             Unions xs      -> foldr1 (\(_, iha, ca) (_, ihb, cb) -> clipize (ca ++ cb) "" (use iha ++ use ihb)) $ map toClip xs
+             At r' (Pt x y) -> let (ci, _, cs) = toClip r' in clipize cs "" ("<g transform=\"translate(" ++ show x ++ " " ++ show y ++ ")\">" ++ use ci ++ "</g>")
+  where clipize o h e = let ih = hash e in let ic = "<g id=\"" ++ ih ++ "\">" ++ e ++ "</g>" in let ch = hash ic in (ch, ih, o ++ "<clipPath id=\"" ++ ch ++ "\"" ++ h ++ ">" ++ ic ++ "</clipPath>\n")
+        hash = show . foldl' (\h c -> 33*h `xor` fromEnum c) 5381
+        use i = "<use x=\"0\" y=\"0\" width=\"" ++ show imgSize ++ "\" height=\"" ++ show imgSize ++ "\" xlink:href=\"#"++ i ++"\" />\n"
+{-
+middle = (xa+xb/2, ya+yb/2)
+rotate = (ya-yb)/(xa-xb) 45%360 = 45°
+-}
+{-
+<clipPath id="clip1">
+    <polygon id="clip1Shape" points="100,10 40,180 190,60 10,60 160,180 100,10" stroke="blue" />        
+</clipPath>
+ 
+<clipPath id="clip2">
+    <circle id="clip2Shape" cx="100" cy="100" r="65" />
+</clipPath>
+ 
+<!-- Intersection -->
+<clipPath id="clipIntersection" clip-path="url(#clip1)">P1C2
+    <use x="0" y="0" width="200" height="200" xlink:href="#clip2Shape" />
+</clipPath>
+ 
+<!-- Union -->
+<clipPath id="clipUnion">C12
+    <use x="0" y="0" width="200" height="200" xlink:href="#clip1Shape" />
+    <use x="0" y="0" width="200" height="200" xlink:href="#clip2Shape" />
+</clipPath>
+....
+<!-- Clip 1 -->
+<rect x="10" y="10" width="180" height="180" fill="url(#myFillGrad)" 
+    clip-path="url(#clip1)" />
+<!-- Clip 2 -->
+<rect x="10" y="10" width="180" height="180" fill="url(#myFillGrad)" 
+    clip-path="url(#clip2)" transform="translate(200)"/>
+<!-- Intersection -->
+<rect x="10" y="10" width="180" height="180" fill="url(#myFillGrad)" 
+    clip-path="url(#clipIntersection)" transform="translate(400)" />
+<!-- Union -->
+<rect x="10" y="10" width="180" height="180" fill="url(#myFillGrad)" 
+    clip-path="url(#clipUnion)" transform="translate(600)" />-}

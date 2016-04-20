@@ -126,4 +126,4 @@ main = putStr $ unlines (zipWith (\t r -> "Time " ++ show t ++ ":\n" ++ r ++ "\n
   -- where sim = foldr (\rep -> appendChan stdout rep exit . appendFile "trackFile" rep exit) done
 
 visualize :: Region -> String
-visualize r = unlines [[if r (Pt x y) then '.' else ' ' | x <- [1,2..20]] | y <- [1,2..20]]
+visualize r = unlines [[if r (Pt x y) then '.' else ' ' | x <- [1,2..200]] | y <- [1,2..200]]
